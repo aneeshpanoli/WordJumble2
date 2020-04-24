@@ -30,8 +30,7 @@ public class GridMaker : MonoBehaviour
       //adjusts the scale of gameboard to fit the screen
       adjust_scale(game_board.transform, new Vector2(0.6f, 0.6f));
       get_letters_onboard();
-      check_col_words();
-      
+      check_words();
       // allows random removal of tiles by setting them inactive
       // random_vanish();
      
@@ -45,8 +44,15 @@ public class GridMaker : MonoBehaviour
       (string state, Transform obj_transform) = hit_object_transform();
 
       // swap tiles as required
-      swap_tiles(state, obj_transform, check_col_words);
+      swap_tiles(state, obj_transform, check_words);
     }
+
+
+    public void check_words(){
+      check_col_words();
+      check_row_words();
+    }
+
 
     public void check_col_words(){
       for (int i=0; i< tiles.Count; i++){
@@ -63,6 +69,26 @@ public class GridMaker : MonoBehaviour
     }
 
     public void check_row_words(){
+      for (int row = 0; row < dim; row++)
+      {
+        List<string> row_letters = new List<string>();
+        for (int i = 0; i < letters.Count; i++){
+          row_letters.Add(letters[i][row]);
+        }
+        
+        (int i_start, int count) = get_word_match_index(string.Join("", row_letters));
+        if (i_start != -1){
+          for (int col = i_start; col < i_start+count; col++)
+          {
+            get_letters_onboard();
+            Debug.Log("col: "+col);
+            remove_and_fill_matched_words(col, row, 1);
+          }
+
+        }
+      
+      }
+    
 
     }
     public void make_grid(){
@@ -124,6 +150,8 @@ public class GridMaker : MonoBehaviour
 
       if (!to_switch_pos.Any()){ //end of the array, just switch letters
         to_switch_letter_and_pos = switch_letters(to_switch_letter_and_pos, col);
+
+        // add the processed tiles back to the list of lists
         tiles[col].AddRange(to_switch_letter_and_pos);
 
       }else{ // the tiles[col] is empty -> a bug here
@@ -148,9 +176,9 @@ public class GridMaker : MonoBehaviour
       Debug.Log(tiles[col].Count);
       for(int i=0;i<tiles_obj.Count;i++){
         Vector2 temp_pos = get_ref_position(col);
-        Debug.Log(temp_pos);
+        // Debug.Log(temp_pos);
         temp_pos.y -= i+1;
-        Debug.Log(temp_pos);
+        // Debug.Log(temp_pos);
         tiles_obj[i].transform.localPosition = temp_pos;
       }
       tiles[col].AddRange(tiles_obj);
