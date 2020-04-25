@@ -2,22 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using System.Collections;
+using UnityEngine.Networking;
 
 
-public class PyzymeWordSearch{
-
-    public static HashSet<string> get_word_hash(){
-        string path = "Assets/Resources/words.txt";
-        HashSet<string> mySet = new HashSet<string>(); 
-        var stream = new StreamReader(@path);
-
-        while (!stream.EndOfStream)
-            mySet.Add(stream.ReadLine());
-
-        return mySet;
-    }
+public class PyzymeWordSearch {
 
     public static Tuple<int, int> get_word_match_index(string str){
+        Debug.Log("Matching word: " + str +"--hash count" + GridMaker.word_hash.Count);
         for (int i=0; i < str.Length;i++){
             for (int j=3; j< str.Length-i;j++){
                 if (GridMaker.word_hash.Contains(str.Substring(i, j))){

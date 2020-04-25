@@ -4,6 +4,8 @@ using UnityEngine;
 using System;
 using System.Linq;
 using TMPro;
+using System.IO;
+using UnityEngine.Networking;
 
 // custom scripts
 using static PyzymeInput;
@@ -15,26 +17,25 @@ public class GridMaker : MonoBehaviour
 {
   public static HashSet<string> word_hash;
   public GameObject [] tile_prefab;
+  public GameObject [] solved_words;
   public GameObject game_board;
+  public GameObject loading_screen;
   public static List<List<GameObject>> tiles;
   public static List<List<string>> letters;
   private static System.Random rnd = new System.Random();
-  private string [] alphabets = "A A B C D E F G H I J K L M N O P Q R S T U V W X Y Z".Split(' ');
+  private string [] alphabets = "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z".Split(' ');
   public static int dim = 9; // gameboard dimension, square
     // Start is called before the first frame update
+
     void Start()
     {
-      word_hash = get_word_hash();
+      get_word_hash();
       //sets up the grid of letters
       make_grid(); 
       //adjusts the scale of gameboard to fit the screen
-      adjust_scale(game_board.transform, new Vector2(0.6f, 0.6f));
-      get_letters_onboard();
+      adjust_scale(game_board.transform, new Vector2(0.7f, 0.7f));
+      get_letters_onboard();  // update letter array with latest changes
       check_words();
-      // allows random removal of tiles by setting them inactive
-      // random_vanish();
-     
-
     }
 
     // Update is called once per frame
@@ -44,6 +45,7 @@ public class GridMaker : MonoBehaviour
       (string state, Transform obj_transform) = hit_object_transform();
 
       // swap tiles as required
+      // check words as tiles are swapped, does latest swap lead to a match?
       swap_tiles(state, obj_transform, check_words);
     }
 
@@ -56,14 +58,13 @@ public class GridMaker : MonoBehaviour
 
     public void check_col_words(){
       for (int i=0; i< tiles.Count; i++){
-        // Debug.Log(string.Join("", letters[col_index]));
         // start and end index (exclusive) of matched word in the string
-        get_letters_onboard();
+        get_letters_onboard();  // update letter array with latest changes
         (int i_start, int count) = get_word_match_index(string.Join("", letters[i]));
         if (i_start != -1){
+          display_solved_words(string.Join("", letters[i]).Substring(i_start, count));
           remove_and_fill_matched_words(i, i_start, count);
-          // Debug.LogFormat("start: {0}, end: {1}", i_start, count);
-          // Debug.Log("match found {}!");
+          check_words(); // optimize this to check only the columns and rows affected use overloading?
         }
       }
     }
@@ -78,18 +79,21 @@ public class GridMaker : MonoBehaviour
         
         (int i_start, int count) = get_word_match_index(string.Join("", row_letters));
         if (i_start != -1){
+          display_solved_words(string.Join("", row_letters).Substring(i_start, count));
           for (int col = i_start; col < i_start+count; col++)
           {
-            get_letters_onboard();
+            get_letters_onboard(); // update letter array with latest changes
             Debug.Log("col: "+col);
             remove_and_fill_matched_words(col, row, 1);
+            check_words();// optimize this to check only the columns and rows affected use overloading?
           }
-
         }
-      
       }
-    
+    }
 
+    public void display_solved_words(String word){
+      solved_words[1].GetComponent<TextMeshPro>().text = solved_words[0].GetComponent<TextMeshPro>().text;
+      solved_words[0].GetComponent<TextMeshPro>().text = word;
     }
     public void make_grid(){
       tiles = new List<List<GameObject>>();
@@ -209,8 +213,50 @@ public class GridMaker : MonoBehaviour
       obj.localScale = obj_scale;
     }
 
-    
+    public void get_word_hash(){
+      word_hash = new HashSet<string>();
+      #if UNITY_EDITOR
+      string filePath = Path.Combine (Application.streamingAssetsPath, "words.txt");
+      var stream = new StreamReader(@filePath);
 
+      while (!stream.EndOfStream)
+          word_hash.Add(stream.ReadLine());
+
+
+      #elif UNITY_IOS
+      
+      string filePath = Path.Combine (Application.streamingAssetsPath + "/Raw", "words.txt");
+      var stream = new StreamReader(@filePath);
+
+      while (!stream.EndOfStream)
+          word_hash.Add(stream.ReadLine());
+
+
+      #elif UNITY_ANDROID
+      StartCoroutine("get_word_hash_android", loading_screen);
+      #endif
+
+      Debug.Log("word hash length: " + word_hash.Count);
+  }
+
+
+    public IEnumerator get_word_hash_android(GameObject loading_screen){
+      loading_screen.SetActive(true);
+      string filePath = Path.Combine (Application.streamingAssetsPath, "words.txt");
+      UnityWebRequest www = UnityWebRequest.Get(filePath);
+      yield return www.SendWebRequest();
+      if (www.isNetworkError || www.isHttpError){
+          Debug.Log(www.error);
+      }else{
+          string [] word_arr = www.downloadHandler.text.Split('\n').Select(p => p.Trim()).ToArray();
+          word_hash = new HashSet<string>(word_arr);
+          // word_hash = new HashSet<string>(word_arr);
+          Debug.Log("word hash length: " + word_hash.Count);
+          check_words();
+          loading_screen.SetActive(false);
+        }
+      
+  }
 }
 
 

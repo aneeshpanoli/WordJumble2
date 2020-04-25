@@ -12,7 +12,7 @@ public class PyzymeGameplay
 // should not swap when that doesnt make a word
 // for testing we will just swap
 
-    public static void swap_tiles(string state, Transform obj_transform, System.Action check_colwords){
+    public static void swap_tiles(string state, Transform obj_transform, System.Action check_words){
     // unpack tuple
         if (state.Equals("Began")){
         // Debug.Log(obj_transform.gameObject.name);
@@ -41,7 +41,7 @@ public class PyzymeGameplay
                 obj_transform.localPosition = temp_pos;
     
                 start_obj = null;
-                check_colwords();
+                check_words();
                 // print_board();
             }
       }
