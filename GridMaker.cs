@@ -23,12 +23,13 @@ public class GridMaker : MonoBehaviour
   public static List<List<GameObject>> tiles;
   public static List<List<string>> letters;
   private static System.Random rnd = new System.Random();
-  private string [] alphabets = "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z".Split(' ');
+  private string [] alphabets;
   public static int dim = 9; // gameboard dimension, square
     // Start is called before the first frame update
 
     void Start()
     {
+      alphabets = "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z".Split(' ');
       get_word_hash();
       //sets up the grid of letters
       make_grid(); 

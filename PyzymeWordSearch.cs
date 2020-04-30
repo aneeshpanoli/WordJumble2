@@ -10,8 +10,9 @@ public class PyzymeWordSearch {
 
     public static Tuple<int, int> get_word_match_index(string str){
         Debug.Log("Matching word: " + str +"--hash count" + GridMaker.word_hash.Count);
-        for (int i=0; i < str.Length;i++){
-            for (int j=3; j< str.Length-i;j++){
+        for (int i=0; i < str.Length-2;i++){
+            for (int j=3; j<= str.Length-i;j++){
+                 Debug.Log(i+ "" + j);
                 if (GridMaker.word_hash.Contains(str.Substring(i, j))){
                     Debug.Log(str.Substring(i, j));
                     return Tuple.Create(i, j);
